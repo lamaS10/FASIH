@@ -4,13 +4,18 @@
     margin-bottom: 30px;
 }
 
+
+/* =========================
+   Patients Table
+========================= */
+
 .patients-table {
     width: 100%;
     border-collapse: collapse;
     background: #fff;
     border-radius: 14px;
     overflow: hidden;
-    box-shadow: 0 10px 28px rgba(0,0,0,0.05);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.05);
 }
 
 .patients-table th,
@@ -22,6 +27,7 @@
 .patients-table thead {
     background: #f5f7fb;
 }
+
 .patients-table th {
     font-weight: 700;
     font-size: 13px;
@@ -31,140 +37,247 @@
 .patients-table th:nth-child(5) {
     text-align: center;
 }
+
+/* =========================
+   Actions
+========================= */
+
 .actions {
-  display: flex;
-  gap: 18px;
-  justify-content: center;  
-  padding-right: 5px;          
+    padding: 16px 20px;
+    text-align: center;
+}
+
+.patient-actions {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 100%;
+    min-height: 30px;
+}
+
+/* إنشاء جلسة + إنشاء خطة */
+.main-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .action-link {
-  font-size: 12px;
-  font-weight: 600;
-  color: #fff;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #3A7BD5, #7ED6A7);
-  white-space: nowrap;
-  transition: 0.2s ease;
+    font-size: 11px;
+    font-weight: 600;
+
+    color: #fff;
+    text-decoration: none;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+
+    padding: 5px 9px;
+
+    border-radius: 999px;
+
+    background: linear-gradient(
+        135deg,
+        #3A7BD5,
+        #7ED6A7
+    );
+
+    white-space: nowrap;
+    transition: 0.2s ease;
+
+    width: auto;
+    flex: 0 0 auto;
 }
 
 .action-link:hover {
-  color: #fff;
-  text-decoration: none;
-  box-shadow: 0 6px 18px rgba(58,123,213,0.30);
+    color: #fff;
+    text-decoration: none;
+    box-shadow: 0 6px 18px rgba(58, 123, 213, 0.30);
+}
+
+.action-link .material-icons {
+    font-size: 16px;
 }
 
 
+/* زر المحادثة */
+
+.chat-action {
+    position: absolute;
+    left: 10px;
+
+    width: 32px;
+    height: 28px;
+    padding: 0;
+}
+
+.chat-action .material-icons {
+    font-size: 17px;
+}
+
+/* =========================
+   Search
+========================= */
+
 .patients-search {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 25px;
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
 }
 
 .patients-search input {
-  flex: 1;
-  padding: 12px 16px;
-  border-radius: 12px;
-  border: 1px solid #ddd;
-  font-size: 14px;
+    flex: 1;
+
+    padding: 12px 16px;
+
+    border-radius: 12px;
+    border: 1px solid #ddd;
+
+    font-size: 14px;
 }
 
 .patients-search button {
-  padding: 12px 24px;
-  border-radius: 999px;
-  border: none;
-  background: linear-gradient(135deg, #3A7BD5, #7ED6A7);
-  color: #fff;
-  font-weight: 600;
-  cursor: pointer;
+    padding: 12px 24px;
+
+    border-radius: 999px;
+    border: none;
+
+    background: linear-gradient(
+        135deg,
+        #3A7BD5,
+        #7ED6A7
+    );
+
+    color: #fff;
+    font-weight: 600;
+
+    cursor: pointer;
 }
 
 .patients-search button:hover {
-  box-shadow: 0 6px 18px rgba(58,123,213,0.35);
+    box-shadow: 0 6px 18px rgba(58, 123, 213, 0.35);
 }
+
+
+/* =========================
+   Reset Search
+========================= */
+
 .reset-search {
-  display: inline-block;
-  margin-bottom: 15px;
-  font-size: 14px;
-  color: #3A7BD5;
-  font-weight: 600;
-  text-decoration: none;
+    display: inline-block;
+
+    margin-bottom: 15px;
+
+    font-size: 14px;
+    color: #3A7BD5;
+    font-weight: 600;
+
+    text-decoration: none;
 }
 
 .reset-search:hover {
-  text-decoration: underline;
+    text-decoration: underline;
 }
+
+
+/* =========================
+   Responsive
+========================= */
 
 @media (max-width: 768px) {
 
-  .page-title {
-    font-size: 22px;
-    margin-bottom: 20px;
-    text-align: center;
-  }
+    .page-title {
+        font-size: 22px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
 
-  
-  .patients-search {
-    flex-direction: column;
-    gap: 12px;
-  }
+    .patients-search {
+        flex-direction: column;
+        gap: 12px;
+    }
 
-  .patients-search button {
-    width: 100%;
-  }
+    .patients-search button {
+        width: 100%;
+    }
 
- 
-  .patients-table,
-  .patients-table thead,
-  .patients-table tbody,
-  .patients-table th,
-  .patients-table td,
-  .patients-table tr {
-    display: block;
-    width: 100%;
-  }
+    .patients-table,
+    .patients-table thead,
+    .patients-table tbody,
+    .patients-table th,
+    .patients-table td,
+    .patients-table tr {
+        display: block;
+        width: 100%;
+    }
 
- 
-  .patients-table thead {
-    display: none;
-  }
+    .patients-table thead {
+        display: none;
+    }
 
-  .patients-table tr {
-    background: #fff;
-    border-radius: 14px;
-    margin-bottom: 16px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
-    padding: 12px;
-  }
+    .patients-table tr {
+        background: #fff;
+        border-radius: 14px;
 
-  .patients-table td {
-    padding: 10px 0;
-    text-align: right;
-    display: flex;
-    justify-content: space-between;
-    font-size: 14px;
-  }
+        margin-bottom: 16px;
+        padding: 12px;
 
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+    }
 
-  .patients-table td::before {
-    content: attr(data-label);
-    font-weight: 600;
-    color: #555;
-  }
+    .patients-table td {
+        padding: 10px 0;
 
-  .actions {
-    flex-wrap: wrap;
-    gap: 12px;
-    justify-content: flex-start;
-    padding: 8px 0 0;
-  }
+        text-align: right;
 
-  .action-link {
-    font-size: 13px;
-  }
+        display: flex;
+        justify-content: space-between;
+
+        font-size: 14px;
+    }
+
+    .patients-table td::before {
+        content: attr(data-label);
+
+        font-weight: 600;
+        color: #555;
+    }
+
+    .actions {
+        padding: 8px 0 0;
+    }
+
+    .patient-actions {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        gap: 12px;
+    }
+
+    .main-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .action-link {
+        font-size: 12px;
+        padding: 5px 9px;
+    }
+
+    .chat-action {
+        width: 32px;
+        height: 28px;
+        padding: 0;
+        flex: 0 0 32px;
+    }
+
+    .chat-action .material-icons {
+        font-size: 17px;
+    }
 }

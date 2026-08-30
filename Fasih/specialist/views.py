@@ -10,6 +10,7 @@ from session.models import Session
 from django.db.models import Q
 from django.contrib import messages
 from django.utils import timezone
+from treatment.models import TreatmentPlan
 
 
 
@@ -79,11 +80,17 @@ def specialist_patients_dashboard(request):
     patients_data = []
 
     for patient in patients:
+        latest_plan = TreatmentPlan.objects.filter(
+            patient=patient,
+            specialist=specialist
+        ).order_by("-created_at").first()
+
         patients_data.append({
             "id": patient.id,
             "name": patient.user.get_full_name(),
             "file_number": patient.file_number,
             "age": patient.age,
+            "plan": latest_plan,
         })
 
     context = {

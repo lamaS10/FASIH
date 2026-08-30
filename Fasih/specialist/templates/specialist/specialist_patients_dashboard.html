@@ -39,7 +39,7 @@
                 <th>رقم الملف</th>
                 <th>العمر</th>
                 <th>الاستبيان</th>
-                <th>الإجراء المناسب</th>
+                <th>الإجراءات</th>
             </tr>
         </thead>
 
@@ -58,18 +58,51 @@
                     </a>
                 </td>
 
-                <td data-label="الإجراء المناسب" class="actions">
-                   <a href="{% url 'start_chat' p.id %}" class="action-link" style="background-color: #3a8edc; color: white;">
-     محادثة
-</a>
+                <td data-label="الإجراءات" class="actions">
 
-                    <a href="{% url 'session:create_session' p.file_number %}" class="action-link">
-                        إنشاء جلسة
-                    </a>
+                    <div class="patient-actions">
 
-                    <a href="{% url 'treatment:create_treatment_plan' p.file_number %}" class="action-link">
-                        إنشاء خطة
-                    </a>
+                        <div class="main-actions">
+
+                            <a href="{% url 'session:create_session' p.file_number %}"
+                            class="action-link action-primary">
+                                <span class="material-icons">event</span>
+                                إنشاء جلسة
+                            </a>
+                            {% if not p.plan or p.plan.status == "COMPLETED" or p.plan.status == "CANCELED" %}
+
+                                <a href="{% url 'treatment:create_treatment_plan' p.file_number %}"
+                                class="action-link action-secondary">
+                                    <span class="material-icons">assignment</span>
+                                    {% if p.plan %}
+                                        إنشاء خطة 
+                                    {% else %}
+                                        إنشاء خطة
+                                    {% endif %}
+                                </a>
+
+                            {% else %}
+
+                                <a href="{% url 'treatment:treatment_plan_detail' p.plan.id %}"
+                                class="action-link action-secondary">
+                                    <span class="material-icons">visibility</span>
+                                    عرض الخطة
+                                </a>
+
+                            {% endif %}
+
+
+                        </div>
+
+                        <a href="{% url 'start_chat' p.id %}"
+                        class="action-link chat-action"
+                        title="محادثة"
+                        aria-label="محادثة">
+                            <span class="material-icons">chat_bubble_outline</span>
+                        </a>
+
+                    </div>
+
                 </td>
             </tr>
             {% endfor %}

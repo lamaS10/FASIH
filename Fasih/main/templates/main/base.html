@@ -35,17 +35,28 @@
                 <a href="{% url 'accounts:my_dashboard' %}" class="dashboard-link">
                     لوحة التحكم
                 </a>
-                <a href="{% url 'chat_inbox' %}" class="nav-chat-link">
-                    المحادثات
-                    {% if unread_messages_count > 0 %}
-                        <span class="red-badge-blink">{{ unread_messages_count }}</span>
-                    {% endif %}
-                </a>
+
             {% endif %}
         </div>
         
         <div class="nav-actions">
             {% if user.is_authenticated %}
+
+                <a href="{% url 'chat_inbox' %}"
+                    class="nav-chat-icon"
+                    title="المحادثات"
+                    aria-label="المحادثات">
+
+                        <span class="material-icons">chat_bubble_outline</span>
+
+                        {% if unread_messages_count > 0 %}
+                            <span class="chat-unread-badge">
+                                {{ unread_messages_count }}
+                            </span>
+                        {% endif %}
+
+                </a>
+            
                 <span class="welcome-text">
                     <a href="{% url 'accounts:my_dashboard' %}" class="user-greeting">
                         <div class="user-info">

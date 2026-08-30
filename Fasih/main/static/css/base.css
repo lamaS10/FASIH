@@ -285,30 +285,94 @@ body {
     }
 }
 
-.nav-chat-link {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
+/* =========================
+   Chat Icon
+========================= */
 
-.red-badge-blink {
-    background-color: #ff3b30;
-    color: #ffffff;
-    font-size: 0.75rem;
-    font-weight: bold;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
+.nav-chat-icon {
+    position: relative;
+
     display: flex;
     align-items: center;
     justify-content: center;
-    line-height: 1;
-    animation: blink-animation 1.2s infinite ease-in-out;
+
+    width: 40px;
+    height: 40px;
+
+    border-radius: 50%;
+    border: 1.5px solid rgba(58, 104, 210, 0.6);
+
+    color: #2663b8;
+    text-decoration: none;
+
+    transition: all 0.25s ease;
 }
 
-@keyframes blink-animation {
-    0% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.35; transform: scale(0.85); }
-    100% { opacity: 1; transform: scale(1); }
+.nav-chat-icon .material-icons {
+    font-size: 22px;
+}
+
+.nav-chat-icon:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #2663b8;
+}
+
+
+/* رقم الرسائل غير المقروءة */
+
+.chat-unread-badge {
+    position: absolute;
+
+    top: -5px;
+    right: -5px;
+
+    min-width: 19px;
+    height: 19px;
+    padding: 0 5px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #ff3b30;
+    color: #ffffff;
+
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+
+    border: 2px solid #ffffff;
+
+    animation: chatBadgePulse 1.2s infinite ease-in-out;
+}
+
+
+/* نبض التنبيه */
+
+@keyframes chatBadgePulse {
+
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.45);
+    }
+
+    50% {
+        transform: scale(1.12);
+        box-shadow: 0 0 0 6px rgba(255, 59, 48, 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 59, 48, 0);
+    }
+}
+
+
+/* عند تحول النافبار للأبيض */
+
+.main-navbar.scrolled .nav-chat-icon {
+    border-color: #679be5;
+    color: #3A7BD5;
 }

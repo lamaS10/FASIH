@@ -32,7 +32,7 @@
             </div>
         {% empty %}
             <div class="empty-chat" id="no-messages">
-                لا توجد رسائل سابقة. ابدأ المحادثة الآن! ✨
+                لا توجد رسائل سابقة. ابدأ المحادثة الآن! 
             </div>
         {% endfor %}
     </div>
@@ -42,7 +42,7 @@
             {% csrf_token %}
             <div class="chat-input-group">
                 <input type="text" id="chat-message-input" class="chat-input" placeholder="اكتب رسالتك هنا..." required autocomplete="off">
-                <button class="btn-send" id="chat-message-submit" type="button">إرسال 🚀</button>
+                <button class="btn-send" id="chat-message-submit" type="button">إرسال </button>
             </div>
         </form>
     </div>

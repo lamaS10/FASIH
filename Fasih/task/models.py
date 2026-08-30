@@ -52,7 +52,6 @@ class PatientTask(models.Model):
         blank=True
     )
 
-    # جاهز للربط  مع Treatment Plan
     source = models.CharField(
         max_length=30,
         default='manual',
