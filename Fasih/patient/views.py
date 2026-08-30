@@ -51,10 +51,14 @@ def patient_dashboard(request):
 
     has_pending_tasks = pending_tasks_count > 0
 
-    # جلسات بانتظار موافقة المريض
+  # جلسات بانتظار رد المريض
     pending_sessions = patient.sessions.filter(
-        status=Session.Status.PROPOSED
-    ).order_by("start_time")
+        status=Session.Status.PROPOSED,
+        proposed_by="SPECIALIST"
+    ).order_by("proposed_start_time")
+
+    # أقرب جلسة بانتظار تأكيد المريض
+    next_pending_session = pending_sessions.first()
 
     # جلسات مؤكدة حالية أو قادمة
     confirmed_sessions = patient.sessions.filter(
@@ -62,11 +66,14 @@ def patient_dashboard(request):
         end_time__gte=timezone.now()
     ).order_by("start_time")
 
-    # هل لدى المريض أي جلسات)
-    has_sessions = pending_sessions.exists() or confirmed_sessions.exists()
+    # أقرب جلسة مؤكدة
+    next_session = confirmed_sessions.first()
 
-    # أقرب جلسة مؤكدة 
-    next_session = confirmed_sessions.first() if confirmed_sessions.exists() else None
+    # هل لدى المريض جلسات حالية تحتاج انتباه
+    has_sessions = (
+        next_pending_session is not None
+        or next_session is not None
+    )
     last_completed_session = patient.sessions.filter(status=Session.Status.COMPLETED).order_by("-start_time").first()
     last_completed_initial_session = patient.sessions.filter(session_type=Session.SessionType.INITIAL,status=Session.Status.COMPLETED).order_by("-start_time").first()
 
@@ -107,6 +114,7 @@ def patient_dashboard(request):
         'confirmed_sessions': confirmed_sessions,
         'has_sessions': has_sessions,
         'next_session': next_session,
+        'next_pending_session': next_pending_session,
 
         # خطة علاجية
         'treatment_plan': treatment_plan,
