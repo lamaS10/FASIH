@@ -28,12 +28,10 @@ def chat_inbox(request):
 
 @login_required
 def start_chat(request, patient_id):
-    try:
-        patient_user = User.objects.get(id=patient_id)
-    except User.DoesNotExist:
-        from patient.models import Patient
-        patient_obj = get_object_or_404(Patient, id=patient_id)
-        patient_user = patient_obj.user
+    from patient.models import Patient
+
+    patient_obj = get_object_or_404(Patient, id=patient_id)
+    patient_user = patient_obj.user
 
     specialist_user = request.user
 
@@ -41,6 +39,7 @@ def start_chat(request, patient_id):
         patient=patient_user,
         specialist=specialist_user
     )
+
     return redirect('chat_room', room_id=room.id)
 
 
