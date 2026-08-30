@@ -33,4 +33,5 @@ urlpatterns = [
     path('assessment/', include('assessment.urls')),
     path('admin-panel/', include('admin_panel.urls')),
     path('ratings/', include('ratings.urls')),
+    path('chat/', include('chat.urls')),
 ]  +  static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

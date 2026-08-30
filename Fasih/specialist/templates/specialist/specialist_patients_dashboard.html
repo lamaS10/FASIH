@@ -59,6 +59,10 @@
                 </td>
 
                 <td data-label="الإجراء المناسب" class="actions">
+                   <a href="{% url 'start_chat' p.id %}" class="action-link" style="background-color: #3a8edc; color: white;">
+     محادثة
+</a>
+
                     <a href="{% url 'session:create_session' p.file_number %}" class="action-link">
                         إنشاء جلسة
                     </a>

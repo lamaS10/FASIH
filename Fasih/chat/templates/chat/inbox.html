@@ -1,0 +1,93 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}فَصِيح | المحادثات{% endblock title %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'chat/css/chat.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="chat-inbox-container">
+    <div class="inbox-card">
+        <div class="inbox-header">
+            <span class="material-icons">forum</span>
+            <h2>المحادثات</h2>
+        </div>
+
+        {% if error %}
+            <div class="empty-state">
+                <span class="material-icons">info</span>
+                <p>{{ error }}</p>
+            </div>
+        {% elif rooms %}
+            <div class="rooms-list">
+                {% for room in rooms %}
+                    {% if request.user == room.patient %}
+                        {% with target_user=room.specialist %}
+                            <a href="{% url 'chat_room' room.id %}" class="room-item">
+                                <div class="room-user-info">
+                                    {% if target_user.profile_image %}
+                                        <img src="{{ target_user.profile_image.url }}" class="room-avatar" alt="صورة">
+                                    {% else %}
+                                        <img src="{% static 'img/default_userprofile_pic.png' %}" class="room-avatar" alt="صورة افتراضية">
+                                    {% endif %}
+                                    <div class="room-details">
+                                        <h4>
+                                            {% if target_user.get_full_name %}
+                                                {{ target_user.get_full_name }}
+                                            {% elif target_user.first_name %}
+                                                {{ target_user.first_name }} {{ target_user.last_name }}
+                                            {% else %}
+                                                {{ target_user.email }}
+                                            {% endif %}
+                                        </h4>
+                                        <p>اضغط لبدء أو متابعة المحادثة</p>
+                                    </div>
+                                </div>
+                                <span class="enter-chat-btn">
+                                    دخول المحادثة
+                                    <span class="material-icons" style="font-size: 1.1rem;">chevron_left</span>
+                                </span>
+                            </a>
+                        {% endwith %}
+                    {% else %}
+                        {% with target_user=room.patient %}
+                            <a href="{% url 'chat_room' room.id %}" class="room-item">
+                                <div class="room-user-info">
+                                    {% if target_user.profile_image %}
+                                        <img src="{{ target_user.profile_image.url }}" class="room-avatar" alt="صورة">
+                                    {% else %}
+                                        <img src="{% static 'img/default_userprofile_pic.png' %}" class="room-avatar" alt="صورة افتراضية">
+                                    {% endif %}
+                                    <div class="room-details">
+                                        <h4>
+                                            {% if target_user.get_full_name %}
+                                                {{ target_user.get_full_name }}
+                                            {% elif target_user.first_name %}
+                                                {{ target_user.first_name }} {{ target_user.last_name }}
+                                            {% else %}
+                                                {{ target_user.email }}
+                                            {% endif %}
+                                        </h4>
+                                        <p>اضغط لبدء أو متابعة المحادثة</p>
+                                    </div>
+                                </div>
+                                <span class="enter-chat-btn">
+                                    دخول المحادثة
+                                    <span class="material-icons" style="font-size: 1.1rem;">chevron_left</span>
+                                </span>
+                            </a>
+                        {% endwith %}
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <span class="material-icons">chat_bubble_outline</span>
+                <p>لا توجد محادثات قائمة حالياً.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock content %}

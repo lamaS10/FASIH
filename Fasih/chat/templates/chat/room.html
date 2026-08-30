@@ -1,0 +1,54 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'chat/css/chat.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="chat-wrapper">
+    <div class="chat-header">
+        <h5>
+            💬 المحادثة مع: 
+            {% if request.user == room.patient %}
+                د. {{ room.specialist.get_full_name|default:room.specialist.email }}
+            {% else %}
+                المريض: {{ room.patient.get_full_name|default:room.patient.email }}
+            {% endif %}
+        </h5>
+        <a href="{% url 'chat_inbox' %}" class="btn-back">رجوع</a>
+    </div>
+    
+    <div class="chat-body" id="chat-messages">
+        {% for message in chat_messages %}
+            <div class="message-bubble {% if message.sender == request.user %}message-sent{% else %}message-received{% endif %}">
+                <div class="message-sender">
+                    {{ message.sender.get_full_name|default:message.sender.email }}
+                </div>
+                <div>{{ message.content }}</div>
+                <div class="message-time">
+                    {{ message.timestamp|date:"h:i A" }}
+                </div>
+            </div>
+        {% empty %}
+            <div class="empty-chat" id="no-messages">
+                لا توجد رسائل سابقة. ابدأ المحادثة الآن! ✨
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="chat-footer">
+        <form id="chat-form" onsubmit="return false;">
+            {% csrf_token %}
+            <div class="chat-input-group">
+                <input type="text" id="chat-message-input" class="chat-input" placeholder="اكتب رسالتك هنا..." required autocomplete="off">
+                <button class="btn-send" id="chat-message-submit" type="button">إرسال 🚀</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="room-data" data-room-id="{{ room.id }}" data-user-id="{{ request.user.id }}"></div>
+
+<script src="{% static 'chat/js/chat_room.js' %}"></script>
+{% endblock %}

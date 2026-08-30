@@ -6,15 +6,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-
     <title>
         {% block title %}فَصِيح | منصة النطق للأطفال{% endblock title %}
     </title>
     <link rel="website icon" type="image/png" href="{% static 'img/logo.png' %}">
 
-
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
@@ -38,33 +35,33 @@
                 <a href="{% url 'accounts:my_dashboard' %}" class="dashboard-link">
                     لوحة التحكم
                 </a>
+                <a href="{% url 'chat_inbox' %}" class="nav-chat-link">
+                    المحادثات
+                    {% if unread_messages_count > 0 %}
+                        <span class="red-badge-blink">{{ unread_messages_count }}</span>
+                    {% endif %}
+                </a>
             {% endif %}
-
         </div>
-
+        
         <div class="nav-actions">
             {% if user.is_authenticated %}
                 <span class="welcome-text">
                     <a href="{% url 'accounts:my_dashboard' %}" class="user-greeting">
+                        <div class="user-info">
+                            <div class="user-avatar">
+                                {% if user.profile_image %}
+                                    <img src="{{ user.profile_image.url }}" alt="صورة المستخدم">
+                                {% else %}
+                                    <img src="{% static 'img/default_userprofile_pic.png' %}" alt="صورة افتراضية">
+                                {% endif %}
+                            </div>
 
-                    <div class="user-info">
-
-                        <div class="user-avatar">
-                        {% if user.profile_image %}
-                            <img src="{{ user.profile_image.url }}" alt="صورة المستخدم">
-                        {% else %}
-                            <img src="{% static 'img/default_userprofile_pic.png' %}" alt="صورة افتراضية">
-                        {% endif %}
+                            <span class="user-name">
+                                مرحبًا {{ user.get_full_name }}
+                            </span>
                         </div>
-
-                        <span class="user-name">
-                        مرحبًا {{ user.get_full_name }}
-                        </span>
-
-                    </div>
-
                     </a>
-
                 </span>
                 <a href="{% url 'accounts:logout' %}" class="icon-btn logout" title="تسجيل الخروج">
                     <span class="material-icons">logout</span>
@@ -78,16 +75,13 @@
                     <span class="material-icons">person_add</span>
                 </a>
             {% endif %}
-
         </div>
 
-<button class="menu-toggle" aria-label="menu">
-    <span class="material-icons">menu</span>
-</button>
-
+        <button class="menu-toggle" aria-label="menu">
+            <span class="material-icons">menu</span>
+        </button>
 
     </nav>
-
 
     <main class="page-wrapper">
         {% if messages %}
@@ -106,22 +100,8 @@
     <footer class="main-footer">
         <p>© 2025 منصة النطق — جميع الحقوق محفوظة</p>
     </footer>
-    <script src="{% static 'js/base.js' %}"></script>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const alertBox = document.getElementById('auto-dismiss-alert');
-            if (alertBox) {
-                setTimeout(function() {
-                    alertBox.style.opacity = '0';
-                    alertBox.style.transform = 'translateY(-10px)';
-                    setTimeout(function() {
-                        alertBox.style.display = 'none';
-                    }, 600); 
-                }, 4000); 
-            }
-        });
-    </script>
+    <script src="{% static 'js/base.js' %}"></script>
 
     {% block extra_js %}
     {% endblock extra_js %}

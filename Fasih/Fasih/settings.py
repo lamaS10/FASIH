@@ -37,6 +37,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',          # يجب أن تكون أولاً دائماً
+    'channels',        # تم إضافتها لتسجيل حزمة الـ Channels
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -55,7 +57,7 @@ INSTALLED_APPS = [
     'storages',
     'admin_panel', 
     'ratings',
-  
+    'chat',
 ]
 AUTH_USER_MODEL = 'accounts.User'
 
@@ -83,13 +85,23 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'patient.context_processors.patient_treatment_status',
-                
+                'chat.context_processors.unread_messages_processor',
             ],
         },
     },
 ]
 
 WSGI_APPLICATION = 'Fasih.wsgi.application'
+
+# تم إضافة هذا السطر لربط Django بتطبيق الـ ASGI (تأكدي أن اسم مجلد المشروع الرئيسي هو Fasih بحرف F كبير)
+ASGI_APPLICATION = 'Fasih.asgi.application'
+
+# استخدام Memory Channel Layer للتطوير المحلي ولتسهيل التواصل اللحظي
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}
 
 
 # Database
@@ -172,6 +184,3 @@ MOYASAR_PUBLISHABLE_KEY = os.getenv("MOYASAR_PUBLISHABLE_KEY")
 R2_TRAINING_VIDEOS_URL = "https://pub-fd6e2f30f561498581446f1d8c47bd4a.r2.dev"
 DAILY_API_KEY = os.getenv("DAILY_API_KEY")
 DAILY_DOMAIN = os.getenv("DAILY_DOMAIN")
-
-
-
