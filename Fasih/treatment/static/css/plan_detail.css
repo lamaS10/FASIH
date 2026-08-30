@@ -288,3 +288,69 @@
     padding: 3px 8px;
   }
 }
+
+/* =========================
+   Pagination
+========================= */
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+
+    width: 100%;
+    margin: 35px auto;
+}
+
+.page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 85px;
+    padding: 8px 18px;
+
+    border-radius: 999px;
+
+    background: linear-gradient(135deg, #3A7BD5, #7ED6A7);
+
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+
+    transition: 0.2s ease;
+}
+
+.page-btn:hover {
+    color: #fff;
+    text-decoration: none;
+
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(58, 123, 213, 0.25);
+}
+
+.page-info {
+    font-size: 14px;
+    font-weight: 600;
+    color: #6b7280;
+
+    white-space: nowrap;
+}
+
+.goals-section {
+    margin-top: 35px;
+}
+
+.goals-subtitle {
+    margin-top: -8px;
+    margin-bottom: 20px;
+
+    color: #7a7f89;
+    font-size: 14px;
+}
+
+.goals-list {
+    margin-top: 15px;
+}

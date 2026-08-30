@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
 from django.contrib import messages
 from datetime import timedelta, datetime
+from django.core.paginator import Paginator
 
 
 
@@ -85,12 +86,27 @@ def create_treatment_plan(request, file_number):
 
 
 
+@login_required
 def treatment_plan_detail(request, plan_id):
     treatment_plan = get_object_or_404(TreatmentPlan, id=plan_id)
 
-    return render(request, "treatment/treatment_plan_detail.html", {
-        "plan": treatment_plan
-    })
+    days = DailyPlan.objects.filter(
+        treatment_plan=treatment_plan
+    ).order_by("date")
+
+    paginator = Paginator(days, 7)
+
+    page_number = request.GET.get("page")
+    daily_plans = paginator.get_page(page_number)
+
+    return render(
+        request,
+        "treatment/treatment_plan_detail.html",
+        {
+            "plan": treatment_plan,
+            "daily_plans": daily_plans,
+        }
+    )
 
 @login_required
 def add_short_term_goal(request, plan_id):
