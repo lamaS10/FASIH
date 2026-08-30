@@ -40,9 +40,16 @@
         </div>
 
         <div class="note-actions">
-        <a href="{% url 'session:session_detail' session.id %}" class="btn-primary">
-        رجوع لتفاصيل الجلسة
-        </a>
+
+            {% if user.role == "SPECIALIST" %}
+                <a href="{% url 'session:session_detail' session.id %}" class="btn-primary">
+                    رجوع لتفاصيل الجلسة
+                </a>
+            {% else %}
+                <a href="{% url 'patient:session_log' %}" class="btn-primary">
+                    الرجوع إلى سجل الجلسات
+                </a>
+            {% endif %}
 
         </div>
 

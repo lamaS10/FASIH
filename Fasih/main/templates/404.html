@@ -1,0 +1,33 @@
+{% extends "main/base.html" %}
+{% load static %}
+
+{% block title %}الصفحة غير موجودة | فصيح{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/error_pages.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<section class="error-page">
+
+  <div class="error-card">
+
+    <div class="error-code">404</div>
+
+    <h1>عذرًا، الصفحة غير موجودة</h1>
+
+    <p class="error-message">
+      يبدو أن الصفحة التي تبحث عنها غير موجودة أو تم نقلها.
+      يمكنك العودة إلى الصفحة الرئيسية ومتابعة استخدام منصة فصيح.
+    </p>
+
+    <a href="{% url 'main:home' %}" class="error-home-btn">
+      العودة إلى الصفحة الرئيسية
+    </a>
+
+  </div>
+
+</section>
+
+{% endblock %}

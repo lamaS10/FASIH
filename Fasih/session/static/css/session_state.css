@@ -1,8 +1,10 @@
+
 .session-state-wrapper {
-  min-height: 70vh;
+  min-height: calc(100vh - 120px);
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
 }
 
 .session-state-card {
@@ -162,4 +164,22 @@
     font-size: 15px;
     padding: 12px;
   }
+}
+
+
+.btn-link {
+  display: inline-block;
+  margin-top: 14px;
+  padding: 10px 24px;
+  border: 1px solid #5f7fd6;
+  border-radius: 999px;
+  color: #5f7fd6;
+  text-decoration: none;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.btn-link:hover {
+  background: #5f7fd6;
+  color: #fff;
 }

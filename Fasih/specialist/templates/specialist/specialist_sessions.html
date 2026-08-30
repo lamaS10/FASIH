@@ -42,12 +42,20 @@
       </td>
 
       <td data-label="التاريخ">
-        {{ session.start_time|date:"Y-m-d" }}
+        {% if session.status == "PROPOSED" and session.proposed_start_time %}
+          {{ session.proposed_start_time|date:"Y-m-d" }}
+        {% else %}
+          {{ session.start_time|date:"Y-m-d" }}
+        {% endif %}
       </td>
 
       <td data-label="الوقت">
-        {{ session.start_time|time:"H:i" }} -
-        {{ session.end_time|time:"H:i" }}
+        {% if session.status == "PROPOSED" and session.proposed_start_time %}
+          {{ session.proposed_start_time|time:"H:i" }}
+        {% else %}
+          {{ session.start_time|time:"H:i" }} -
+          {{ session.end_time|time:"H:i" }}
+        {% endif %}
       </td>
 
       <td data-label="الحالة">

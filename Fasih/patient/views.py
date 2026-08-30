@@ -1,17 +1,18 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
-from datetime import date, timedelta
+from datetime import date
+from django.utils import timezone
 from .models import Patient
 from accounts.models import User
 from accounts.forms import UserProfileForm, PatientProfileForm
 from django.contrib import messages
-from task.models import PatientTask
 from session.models import Session
 from treatment.models import TreatmentPlan
 from assessment.models import Assessment
 from django.core.paginator import Paginator
 from payment.models import Payment
 from treatment.models import calculate_treatment_price
+from treatment.models import DailyTask
 
 
 
@@ -29,20 +30,36 @@ def patient_dashboard(request):
     except Patient.DoesNotExist:
         return redirect('accounts:complete_patient_profile')
 
-    today_tasks_count = PatientTask.objects.filter(
-        patient=patient,
-        due_date=date.today(),
-        status='pending'
+  
+
+    # مهام اليوم غير المنفذة ضمن الخطة النشطة
+    today_tasks_count = DailyTask.objects.filter(
+        daily_plan__treatment_plan__patient=patient,
+        daily_plan__treatment_plan__status=TreatmentPlan.Status.ACTIVE,
+        daily_plan__date=date.today()
+    ).exclude(
+        status=DailyTask.Status.COMPLETED
     ).count()
+
+    # جميع المهام غير المنفذة ضمن الخطة النشطة
+    pending_tasks_count = DailyTask.objects.filter(
+        daily_plan__treatment_plan__patient=patient,
+        daily_plan__treatment_plan__status=TreatmentPlan.Status.ACTIVE
+    ).exclude(
+        status=DailyTask.Status.COMPLETED
+    ).count()
+
+    has_pending_tasks = pending_tasks_count > 0
 
     # جلسات بانتظار موافقة المريض
     pending_sessions = patient.sessions.filter(
         status=Session.Status.PROPOSED
     ).order_by("start_time")
 
-    # جلسات مؤكدة
+    # جلسات مؤكدة حالية أو قادمة
     confirmed_sessions = patient.sessions.filter(
-        status=Session.Status.CONFIRMED
+        status=Session.Status.CONFIRMED,
+        end_time__gte=timezone.now()
     ).order_by("start_time")
 
     # هل لدى المريض أي جلسات)
@@ -51,12 +68,16 @@ def patient_dashboard(request):
     # أقرب جلسة مؤكدة 
     next_session = confirmed_sessions.first() if confirmed_sessions.exists() else None
     last_completed_session = patient.sessions.filter(status=Session.Status.COMPLETED).order_by("-start_time").first()
+    last_completed_initial_session = patient.sessions.filter(session_type=Session.SessionType.INITIAL,status=Session.Status.COMPLETED).order_by("-start_time").first()
 
 
     # الخطة العلاجية
     treatment_plan = TreatmentPlan.objects.filter(
         patient=patient
     ).order_by("-created_at").first()
+
+    if treatment_plan:
+        treatment_plan.update_status_if_expired()
     assessment = Assessment.objects.filter(patient=patient).order_by("-created_at").first()
     linked_specialist = None
 
@@ -78,7 +99,8 @@ def patient_dashboard(request):
 
         # مهام
         'today_tasks_count': today_tasks_count,
-        'has_tasks': today_tasks_count > 0,
+        'pending_tasks_count': pending_tasks_count,
+        'has_pending_tasks': has_pending_tasks,
 
         # جلسات
         'pending_sessions': pending_sessions,
@@ -91,6 +113,7 @@ def patient_dashboard(request):
         'assessment': assessment,
         "linked_specialist": linked_specialist,
         "last_completed_session": last_completed_session,
+        "last_completed_initial_session": last_completed_initial_session,
         "has_active_treatment": has_active_treatment,
         'has_specialist': False,
     }
@@ -179,6 +202,8 @@ def patient_sessions(request):
     treatment_plan = TreatmentPlan.objects.filter(
         patient=patient
     ).order_by("-created_at").first()
+    if treatment_plan:
+        treatment_plan.update_status_if_expired()
 
     #  الجلسة الاستشارية (تشمل PROPOSED و CONFIRMED)
     consultation_sessions = patient.sessions.filter(
@@ -224,10 +249,16 @@ def patient_treatment_plan(request):
     assessment = Assessment.objects.filter(
         patient=patient
     ).order_by("-created_at").first()
+    last_completed_initial_session = Session.objects.filter(
+        patient=patient,
+        session_type=Session.SessionType.INITIAL,
+        status=Session.Status.COMPLETED
+    ).order_by("-start_time").first()
 
     context = {
         "treatment_plans": treatment_plans,
         "assessment": assessment,
+        "last_completed_initial_session": last_completed_initial_session,
     }
 
     return render(

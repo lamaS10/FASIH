@@ -17,32 +17,41 @@
   </div>
 
   {% if not consultation_sessions and not therapy_sessions %}
+
     <div class="sessions-empty-wrapper">
       <div class="sessions-empty-card">
 
         {% if not assessment %}
+
           <h3>لا توجد جلسات حاليًا</h3>
           <p class="hint">
             يرجى اختيار أخصائي وتعبئة استبيان الاستشارة الأولى.
           </p>
+          <a href="{% url 'specialist:choose_specialist' %}" class="btn-primary">
+             اختيار أخصائي
+          </a>
 
         {% elif assessment.status == "PENDING" %}
+
           <h3>بانتظار موافقة الأخصائي</h3>
           <p class="hint">
             سيتم تحديد الجلسة الاستشارية قريبًا.
           </p>
 
         {% elif assessment.status == "ACCEPTED" %}
+
           <h3>بانتظار جدولة الجلسة</h3>
           <p class="hint">
             تم قبول الاستشارة وسيتم تحديد موعد الجلسة قريبًا.
           </p>
 
         {% elif assessment.status == "REJECTED" %}
+
           <h3>تم رفض الاستشارة</h3>
           <p class="hint">
             {{ assessment.get_rejection_reason_display }}
           </p>
+
         {% endif %}
 
       </div>
@@ -50,169 +59,510 @@
 
   {% else %}
 
-  {#  الجلسة الاستشارية  #}
+
+  {# ================= الجلسة الاستشارية ================= #}
+
   {% if consultation_sessions %}
+
   <section class="sessions-section">
+
     <h3 class="section-title">الجلسة الاستشارية</h3>
 
     {% for session in consultation_sessions %}
+
       <div class="consultation-card clean">
 
         <div class="consultation-header">
+
           <h4>{{ session.title }}</h4>
+
           <span class="time">
-            {{ session.start_time|date:"Y-m-d" }}
-            {{ session.start_time|time:"H:i" }}
+
+            {% if session.status == "PROPOSED" and session.proposed_start_time %}
+
+              {{ session.proposed_start_time|date:"Y-m-d" }}
+              {{ session.proposed_start_time|time:"H:i" }}
+
+            {% else %}
+
+              {{ session.start_time|date:"Y-m-d" }}
+              {{ session.start_time|time:"H:i" }}
+
+            {% endif %}
+
           </span>
+
         </div>
 
-        {#  بانتظار المريض  #}
+
+        {# ===== موعد مقترح ===== #}
+
         {% if session.status == "PROPOSED" %}
-        <form method="post" action="{% url 'session:respond_session' session.id %}">
-          {% csrf_token %}
 
-          <div class="actions">
-            <button type="submit" name="action" value="accept" class="btn-accept">
-              أوافق
-            </button>
 
-            <button type="button"
-                    class="btn-reject-outline"
-                    onclick="toggleReject('{{ session.id }}')">
-              لا يناسبني
-            </button>
-          </div>
+          {# آخر اقتراح من الأخصائي = دور المريض للرد #}
 
-          <div id="reject-box-{{ session.id }}" class="reject-box">
-            <textarea name="reason"
-                      placeholder="سبب عدم مناسبة الموعد"></textarea>
+          {% if session.proposed_by == "SPECIALIST" %}
 
-            <textarea name="suggested_times"
-                      placeholder="أوقات مقترحة (اختياري)"></textarea>
+            <div class="status">
+              موعد مقترح من الأخصائي
+            </div>
 
-            <button type="submit"
-                    name="action"
-                    value="reject"
-                    class="btn-reject">
-              إرسال الرفض
-            </button>
-          </div>
-        </form>
+            <form method="post"
+                  action="{% url 'session:respond_session' session.id %}">
 
-        {#  مؤكدة  #}
+              {% csrf_token %}
+
+              <div class="actions">
+
+                <button type="submit"
+                        name="action"
+                        value="accept"
+                        class="btn-accept">
+                  أوافق
+                </button>
+
+
+                {% if session.proposal_count < 3 %}
+
+                  <button type="button"
+                          class="btn-reject-outline"
+                          onclick="toggleReject('{{ session.id }}')">
+                    اقتراح موعد آخر
+                  </button>
+
+                {% else %}
+
+                  <button type="button"
+                          class="btn-reject-outline"
+                          onclick="toggleReject('{{ session.id }}')">
+                    رفض الجلسة
+                  </button>
+
+                {% endif %}
+
+              </div>
+
+
+              <div id="reject-box-{{ session.id }}"
+                   class="reject-box">
+
+                {% if session.proposal_count < 3 %}
+
+                  <label>الموعد المقترح الجديد</label>
+
+                  <input type="datetime-local"
+                         name="proposed_start_time">
+
+                  <button type="submit"
+                          name="action"
+                          value="suggest"
+                          class="btn-accept">
+                    إرسال الموعد المقترح
+                  </button>
+
+                {% endif %}
+
+
+                <textarea name="reason"
+                          placeholder="سبب رفض الجلسة (اختياري)"></textarea>
+
+                <button type="submit"
+                        name="action"
+                        value="reject"
+                        class="btn-reject">
+                  رفض الجلسة
+                </button>
+
+              </div>
+
+            </form>
+
+
+          {# آخر اقتراح من المريض = ينتظر الأخصائي #}
+
+          {% elif session.proposed_by == "PATIENT" %}
+
+            <div class="status">
+              بانتظار رد الأخصائي على الموعد المقترح
+            </div>
+
+            <span class="muted">
+              ⏳ تم إرسال الموعد المقترح للأخصائي
+            </span>
+
+          {% endif %}
+
+
+        {# ===== مؤكدة ===== #}
+
         {% elif session.status == "CONFIRMED" %}
-          <div class="status confirmed">تم تأكيد الجلسة</div>
+
+          <div class="status confirmed">
+            تم تأكيد الجلسة
+          </div>
 
           {% if session.can_join %}
+
             {% if not session.specialist_joined %}
-              <span class="muted">⏳ بانتظار دخول الأخصائي</span>
+
+             <span
+              class="muted session-countdown"
+              data-start="{{ session.start_time|date:'c' }}">
+              ⏳ جارٍ حساب الوقت المتبقي...
+            </span>
+
             {% else %}
+
               <a href="{% url 'session:join_session' session.id %}"
                  class="btn-primary">
                 دخول الجلسة
               </a>
+
             {% endif %}
+
           {% else %}
+
             <span class="muted">
               🕒 موعد الجلسة:
               {{ session.start_time|date:"Y-m-d" }}
               {{ session.start_time|time:"H:i" }}
             </span>
+
           {% endif %}
 
-        {#  منتهية  #}
+
+        {# ===== منتهية ===== #}
+
         {% elif session.status == "COMPLETED" %}
-          <div class="status completed">انتهت الجلسة</div>
+
+          <div class="status completed">
+            انتهت الجلسة
+          </div>
 
           {% if session.note %}
+
             <a href="{% url 'patient:session_note_detail' session.id %}"
                class="btn-primary">
               عرض ملاحظات الجلسة
             </a>
+
           {% else %}
-            <span class="muted">⏳ بانتظار ملاحظات الأخصائي</span>
+
+            <span class="muted">
+              ⏳ بانتظار ملاحظات الأخصائي
+            </span>
+
           {% endif %}
 
-        {#  مرفوضة  #}
+
+        {# ===== مرفوضة ===== #}
+
         {% elif session.status == "REJECTED" %}
-          <div class="status rejected">تم رفض الجلسة</div>
+
+          <div class="status rejected">
+            تم رفض الجلسة
+          </div>
 
           {% if session.patient_response_reason %}
+
             <p class="reject-reason">
               <strong>سبب الرفض:</strong>
               {{ session.patient_response_reason }}
             </p>
+
           {% endif %}
+
+
+        {# ===== ملغاة ===== #}
+
+        {% elif session.status == "CANCELED" %}
+
+          <div class="status rejected">
+            تم إلغاء الجلسة
+          </div>
+
         {% endif %}
 
       </div>
+
     {% endfor %}
+
   </section>
+
   {% endif %}
 
-  {#  الجلسات العلاجية  #}
+
+
+  {# ================= الجلسات العلاجية ================= #}
+
   <section class="sessions-section">
+
     <h3 class="section-title">الجلسات العلاجية</h3>
 
-    {% if can_access_therapy_sessions and therapy_sessions %}
-      {% for session in therapy_sessions %}
-        <div class="therapy-card">
 
-          <div class="therapy-header">
+    {% if can_access_therapy_sessions and therapy_sessions %}
+
+      {% for session in therapy_sessions %}
+
+        <div class="therapy-card consultation-card clean">
+
+          <div class="therapy-header consultation-header">
+
             <h4>{{ session.title }}</h4>
+
             <span class="time">
-              {{ session.start_time|date:"Y-m-d" }}
-              {{ session.start_time|time:"H:i" }}
+
+              {% if session.status == "PROPOSED" and session.proposed_start_time %}
+
+                {{ session.proposed_start_time|date:"Y-m-d" }}
+                {{ session.proposed_start_time|time:"H:i" }}
+
+              {% else %}
+
+                {{ session.start_time|date:"Y-m-d" }}
+                {{ session.start_time|time:"H:i" }}
+
+              {% endif %}
+
             </span>
+
           </div>
 
-          {% if session.status == "CONFIRMED" %}
+
+          {# ===== موعد علاجي مقترح ===== #}
+
+          {% if session.status == "PROPOSED" %}
+
+
+            {% if session.proposed_by == "SPECIALIST" %}
+
+              <div class="status">
+                موعد علاجي مقترح من الأخصائي
+              </div>
+
+              <form method="post"
+                    action="{% url 'session:respond_session' session.id %}">
+
+                {% csrf_token %}
+
+                <div class="actions">
+
+                  <button type="submit"
+                          name="action"
+                          value="accept"
+                          class="btn-accept">
+                    أوافق
+                  </button>
+
+
+                  {% if session.proposal_count < 3 %}
+
+                    <button type="button"
+                            class="btn-reject-outline"
+                            onclick="toggleReject('{{ session.id }}')">
+                      اقتراح موعد آخر
+                    </button>
+
+                  {% else %}
+
+                    <button type="button"
+                            class="btn-reject-outline"
+                            onclick="toggleReject('{{ session.id }}')">
+                      رفض الجلسة
+                    </button>
+
+                  {% endif %}
+
+                </div>
+
+
+                <div id="reject-box-{{ session.id }}"
+                     class="reject-box">
+
+                  {% if session.proposal_count < 3 %}
+
+                    <label>الموعد المقترح الجديد</label>
+
+                    <input type="datetime-local"
+                           name="proposed_start_time">
+
+                    <button type="submit"
+                            name="action"
+                            value="suggest"
+                            class="btn-accept">
+                      إرسال الموعد المقترح
+                    </button>
+
+                  {% endif %}
+
+
+                  <textarea name="reason"
+                            placeholder="سبب رفض الجلسة (اختياري)"></textarea>
+
+                  <button type="submit"
+                          name="action"
+                          value="reject"
+                          class="btn-reject">
+                    رفض الجلسة
+                  </button>
+
+                </div>
+
+              </form>
+
+
+            {% elif session.proposed_by == "PATIENT" %}
+
+              <div class="status">
+                بانتظار رد الأخصائي على الموعد المقترح
+              </div>
+
+              <span class="muted">
+                ⏳ تم إرسال الموعد المقترح للأخصائي
+              </span>
+
+            {% endif %}
+
+
+          {# ===== مؤكدة ===== #}
+
+          {% elif session.status == "CONFIRMED" %}
+
+            <div class="status confirmed">
+              تم تأكيد الجلسة
+            </div>
+
             {% if session.can_join %}
+
               {% if not session.specialist_joined %}
-                <span class="muted">⏳ بانتظار دخول الأخصائي</span>
+
+                 <span
+                  class="muted session-countdown"
+                  data-start="{{ session.start_time|date:'c' }}">
+                  ⏳ جارٍ حساب الوقت المتبقي...
+                </span>
+
               {% else %}
+
                 <a href="{% url 'session:join_session' session.id %}"
                    class="btn-primary">
                   دخول الجلسة
                 </a>
+
               {% endif %}
+
             {% else %}
-              <span class="muted">⏳ لم يحن وقت الجلسة بعد</span>
+
+              <span class="muted">
+                🕒 موعد الجلسة:
+                {{ session.start_time|date:"Y-m-d" }}
+                {{ session.start_time|time:"H:i" }}
+              </span>
+
             {% endif %}
 
+
+          {# ===== منتهية ===== #}
+
           {% elif session.status == "COMPLETED" %}
-            <div class="status completed">انتهت الجلسة</div>
+
+            <div class="status completed">
+              انتهت الجلسة
+            </div>
 
             {% if session.note %}
+
               <a href="{% url 'patient:session_note_detail' session.id %}"
                  class="btn-primary">
                 عرض ملاحظات الجلسة
               </a>
+
             {% else %}
-              <span class="muted">⏳ بانتظار ملاحظات الأخصائي</span>
+
+              <span class="muted">
+                ⏳ بانتظار ملاحظات الأخصائي
+              </span>
+
             {% endif %}
+
+
+          {# ===== مرفوضة ===== #}
+
+          {% elif session.status == "REJECTED" %}
+
+            <div class="status rejected">
+              تم رفض الجلسة
+            </div>
+
+
+          {# ===== ملغاة ===== #}
+
+          {% elif session.status == "CANCELED" %}
+
+            <div class="status rejected">
+              تم إلغاء الجلسة
+            </div>
+
           {% endif %}
 
         </div>
+
       {% endfor %}
+
+
     {% else %}
+
       <p class="muted">
         ستظهر الجلسات العلاجية بعد اعتماد الخطة العلاجية.
       </p>
+
     {% endif %}
+
   </section>
+
 
   {% endif %}
 
 </div>
 
+
 <script>
+
 function toggleReject(id) {
+
   const box = document.getElementById("reject-box-" + id);
+
   if (box) {
     box.classList.toggle("show");
   }
+
 }
+
+function updateSessionCountdowns() {
+  const countdowns = document.querySelectorAll(".session-countdown");
+
+  countdowns.forEach((element) => {
+    const startTime = new Date(element.dataset.start).getTime();
+    const now = new Date().getTime();
+    const diff = startTime - now;
+
+    if (diff <= 0) {
+      element.innerHTML = "⏳ حان موعد الجلسة، بانتظار دخول الأخصائي";
+      return;
+    }
+
+    const minutes = Math.floor(diff / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    element.innerHTML =
+      `⏱ تبدأ الجلسة خلال ${minutes}:${String(seconds).padStart(2, "0")}`;
+  });
+}
+
+updateSessionCountdowns();
+setInterval(updateSessionCountdowns, 1000);
+
 </script>
 
 {% endblock %}

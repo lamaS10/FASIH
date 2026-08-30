@@ -11,7 +11,7 @@ from django.urls import reverse
 from patient.models import Patient
 from .models import Session,SessionNote
 from session.daily import create_daily_room, create_daily_token
-from session.email_service import (send_session_confirmed_email,send_session_cancelled_email,send_session_completed_email)
+from session.email_service import (send_session_confirmed_email,send_session_cancelled_email,send_session_completed_email,send_session_rejected_email)
 
 
 
@@ -53,7 +53,7 @@ def create_session(request, file_number):
                 )
                 return redirect(request.path)
 
-            status = Session.Status.CONFIRMED
+            status = Session.Status.PROPOSED 
 
         else:
             messages.error(request, "نوع جلسة غير صالح")
@@ -66,10 +66,12 @@ def create_session(request, file_number):
             start_time=start_time,
             end_time=end_time,
             session_type=session_type,
-            status=status
+            status=status,
+            proposed_start_time=start_time,
+            proposed_by=Session.ProposedBy.SPECIALIST,
+            proposal_count=1,
         )
-        if status == Session.Status.CONFIRMED:
-            send_session_confirmed_email(session)
+   
 
         messages.success(request, "تم إنشاء الجلسة بنجاح ")
         return redirect("session:session_detail", session.id)
@@ -87,6 +89,19 @@ def create_session(request, file_number):
 def session_detail(request, session_id):
     session = get_object_or_404(Session, id=session_id)
 
+    is_specialist = (
+        hasattr(request.user, "specialist")
+        and request.user.specialist == session.specialist
+    )
+
+    is_patient = (
+        hasattr(request.user, "patient_profile")
+        and request.user.patient_profile == session.patient
+    )
+
+    if not is_specialist and not is_patient:
+        return redirect("main:home")
+
     return render(
         request,
         "session/session_detail.html",
@@ -100,8 +115,9 @@ def session_detail(request, session_id):
 def join_session(request, session_id):
     session = get_object_or_404(Session, id=session_id)
 
-    is_specialist = hasattr(request.user, "specialist")
-    is_patient = hasattr(request.user, "patient_profile")
+
+    is_specialist = (hasattr(request.user, "specialist")and request.user.specialist == session.specialist)
+    is_patient = (hasattr(request.user, "patient_profile")and request.user.patient_profile == session.patient)
 
     if not is_specialist and not is_patient:
         messages.error(request, "لا تملك صلاحية الدخول لهذه الجلسة")
@@ -159,6 +175,7 @@ def join_session(request, session_id):
 
 
 @login_required
+@require_POST
 def respond_session(request, session_id):
     session = get_object_or_404(Session, id=session_id)
 
@@ -172,28 +189,136 @@ def respond_session(request, session_id):
         messages.error(request, "تم التعامل مع هذه الجلسة مسبقًا")
         return redirect("patient:sessions")
 
+    if session.proposed_by != Session.ProposedBy.SPECIALIST:
+        messages.info(request, "بانتظار رد الأخصائي على الموعد المقترح")
+        return redirect("patient:sessions")
+
     if request.method == "POST":
         action = request.POST.get("action")
 
         if action == "accept":
+            duration = session.end_time - session.start_time
+
+            if session.proposed_start_time:
+                session.start_time = session.proposed_start_time
+                session.end_time = session.proposed_start_time + duration
+
             session.status = Session.Status.CONFIRMED
             session.save()
+
             send_session_confirmed_email(session)
 
-
             messages.success(request, "تم تأكيد الجلسة بنجاح")
+
+        elif action == "suggest":
+
+            if session.proposal_count >= 3:
+                messages.error(request, "لا يمكن اقتراح موعد آخر")
+                return redirect("patient:sessions")
+
+            proposed_time = request.POST.get("proposed_start_time")
+
+            if not proposed_time:
+                messages.error(request, "يرجى اختيار الموعد المقترح")
+                return redirect("patient:sessions")
+
+            proposed_time = timezone.make_aware(
+                datetime.fromisoformat(proposed_time)
+            )
+
+            if proposed_time <= timezone.now():
+                messages.error(request, "يجب اختيار موعد مستقبلي")
+                return redirect("patient:sessions")
+
+            session.proposed_start_time = proposed_time
+            session.proposed_by = Session.ProposedBy.PATIENT
+            session.proposal_count += 1
+            session.save()
+
+            messages.success(
+                request,
+                "تم إرسال الموعد المقترح إلى الأخصائي"
+            )
 
         elif action == "reject":
             session.status = Session.Status.REJECTED
             session.patient_response_reason = request.POST.get("reason")
-            session.patient_suggested_times = request.POST.get("suggested_times")
             session.save()
-            send_session_cancelled_email(session)
+
+            send_session_rejected_email(session)
 
 
-            messages.info(request,"تم إرسال رفض الموعد واقتراح أوقات بديلة")
+            messages.info(request, "تم رفض الجلسة")
 
         return redirect("patient:sessions")
+
+
+@login_required
+@require_POST
+def specialist_respond_session(request, session_id):
+    session = get_object_or_404(Session, id=session_id)
+
+    # فقط أخصائي الجلسة نفسه
+    if not hasattr(request.user, "specialist"):
+        return redirect("main:home")
+
+    if request.user.specialist != session.specialist:
+        return redirect("main:home")
+
+    # لازم الجلسة ما زالت في مرحلة الاقتراح
+    if session.status != Session.Status.PROPOSED:
+        messages.error(request, "تم التعامل مع هذه الجلسة مسبقًا")
+        return redirect("session:session_detail", session.id)
+
+    # الأخصائي يرد فقط إذا آخر اقتراح كان من المريض
+    if session.proposed_by != Session.ProposedBy.PATIENT:
+        messages.info(request, "بانتظار رد المريض على الموعد المقترح")
+        return redirect("session:session_detail", session.id)
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        # قبول موعد المريض
+        if action == "accept":
+            duration = session.end_time - session.start_time
+
+            session.start_time = session.proposed_start_time
+            session.end_time = session.proposed_start_time + duration
+            session.status = Session.Status.CONFIRMED
+            session.save()
+
+            send_session_confirmed_email(session)
+
+            messages.success(request, "تم تأكيد الموعد المقترح")
+
+        # الأخصائي يقترح الموعد الثالث والأخير
+        elif action == "suggest":
+
+            if session.proposal_count >= 3:
+                messages.error(request, "تم الوصول إلى الحد الأقصى للاقتراحات")
+                return redirect("session:session_detail", session.id)
+
+            proposed_time = request.POST.get("proposed_start_time")
+
+            if not proposed_time:
+                messages.error(request, "يرجى اختيار موعد")
+                return redirect("session:session_detail", session.id)
+
+            proposed_time = timezone.make_aware(
+                datetime.fromisoformat(proposed_time))
+
+            if proposed_time <= timezone.now():
+                messages.error(request, "يجب اختيار موعد مستقبلي")
+                return redirect("session:session_detail", session.id)
+
+            session.proposed_start_time = proposed_time
+            session.proposed_by = Session.ProposedBy.SPECIALIST
+            session.proposal_count += 1
+            session.save()
+
+            messages.success(request,"تم إرسال الموعد الأخير المقترح إلى المريض")
+
+        return redirect("session:session_detail", session.id)
 
 @login_required
 @require_POST
@@ -203,10 +328,16 @@ def complete_session(request, session_id):
     if session.status != Session.Status.CONFIRMED:
         return JsonResponse({"error": "invalid session state"}, status=400)
 
-    if hasattr(request.user, "specialist"):
+
+
+    if (
+        hasattr(request.user, "specialist")
+        and request.user.specialist == session.specialist
+    ):
         session.status = Session.Status.COMPLETED
         session.save()
         send_session_completed_email(session)
+
         return JsonResponse({
             "status": "completed",
             "redirect_url": reverse("session:join_session", args=[session.id])
@@ -223,6 +354,9 @@ def add_session_note(request, session_id):
     # فقط الأخصائي
     if not hasattr(request.user, "specialist"):
         messages.error(request, "غير مصرح لك")
+        return redirect("main:home")
+
+    if request.user.specialist != session.specialist:
         return redirect("main:home")
 
     # الجلسة لازم تكون منتهية
@@ -255,6 +389,18 @@ def add_session_note(request, session_id):
 @login_required
 def session_note_detail(request, session_id):
     session = get_object_or_404(Session, id=session_id)
+    is_specialist = (
+        hasattr(request.user, "specialist")
+        and request.user.specialist == session.specialist
+    )
+
+    is_patient = (
+        hasattr(request.user, "patient_profile")
+        and request.user.patient_profile == session.patient
+    )
+
+    if not is_specialist and not is_patient:
+        return redirect("main:home")
 
     # الجلسة لازم تكون منتهية
     if session.status != Session.Status.COMPLETED:
@@ -268,3 +414,26 @@ def session_note_detail(request, session_id):
             "session": session
         }
     )
+
+@login_required
+@require_POST
+def cancel_session(request, session_id):
+    session = get_object_or_404(Session, id=session_id)
+
+    if not hasattr(request.user, "specialist"):
+        return redirect("main:home")
+
+    if request.user.specialist != session.specialist:
+        return redirect("main:home")
+
+    if session.status != Session.Status.CONFIRMED:
+        messages.error(request, "لا يمكن إلغاء هذه الجلسة")
+        return redirect("session:session_detail", session.id)
+
+    session.status = Session.Status.CANCELED
+    session.save()
+
+    send_session_cancelled_email(session)
+
+    messages.success(request, "تم إلغاء الجلسة بنجاح")
+    return redirect("session:session_detail", session.id)

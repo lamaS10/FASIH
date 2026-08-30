@@ -1,13 +1,14 @@
-{% extends "patient/base_patient.html" %}
+{% extends "main/base.html" %}
 {% load static %}
 
 {% block title %}الجلسة لم تبدأ{% endblock %}
 
-{% block patient_css %}
+{% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/session_state.css' %}">
 {% endblock %}
 
-{% block patient_content %}
+{% block content %}
+
 <div class="session-state-wrapper">
   <div class="session-state-card">
 
@@ -22,9 +23,15 @@
       جارٍ حساب الوقت المتبقي...
     </div>
 
-    <a href="{% url 'patient:sessions' %}" class="btn-primary">
-      العودة إلى جلساتي
-    </a>
+    {% if user.specialist %}
+      <a href="{% url 'session:session_detail' session.id %}" class="btn-primary">
+        العودة إلى تفاصيل الجلسة
+      </a>
+    {% else %}
+      <a href="{% url 'patient:sessions' %}" class="btn-primary">
+        العودة إلى جلساتي
+      </a>
+    {% endif %}
 
   </div>
 </div>
@@ -38,7 +45,7 @@
     const diff = sessionStartTime - now;
 
     if (diff <= 0) {
-      countdownEl.innerHTML = "✅ الجلسة بدأت الآن";
+      countdownEl.innerHTML = "✅ حان موعد الجلسة";
       countdownEl.className = "countdown started";
 
       setTimeout(() => {
@@ -67,4 +74,5 @@
   updateCountdown();
   setInterval(updateCountdown, 1000);
 </script>
+
 {% endblock %}

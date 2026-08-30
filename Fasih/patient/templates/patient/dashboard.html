@@ -56,10 +56,10 @@
 
         {% if assessment %}
 
-          {% if last_completed_session %}
+          {% if last_completed_initial_session %}
             <p class="status completed">تمت الجلسة الاستشارية</p>
 
-            {% if last_completed_session.note %}
+            {% if last_completed_initial_session.note %}
               <span class="hint">تمت إضافة ملاحظات الجلسة</span>
             {% else %}
               <span class="hint">بانتظار ملاحظات الأخصائي</span>
@@ -71,6 +71,7 @@
 
           {% elif assessment.status == "ACCEPTED" %}
             <p class="status accepted">تم قبول الاستشارة</p>
+            
 
             {% if has_sessions %}
               <span class="hint">تم تحديد جلسة استشارية</span>
@@ -98,21 +99,53 @@
     </div>
 
     <!-- كارد مهامي اليوم -->
-    <div class="dashboard-card {% if today_tasks_count > 0 %}card-active{% endif %}">
+    <div class="dashboard-card {% if today_tasks_count > 0 or has_pending_tasks %}card-active{% endif %}">
       <div class="card-header">
         <h3>مهامي اليوم</h3>
       </div>
 
       <div class="card-body">
+
         {% if today_tasks_count > 0 %}
-          <p>لديك <strong>{{ today_tasks_count }}</strong> مهام لليوم</p>
-          <a href="{% url 'tasks:daily_tasks' %}" class="card-link">
+
+        {% if today_tasks_count == 1 %}
+          <p>لديك مهمة علاجية لليوم</p>
+        {% else %}
+          <p>
+            لديك <strong>{{ today_tasks_count }}</strong> مهام علاجية لليوم
+          </p>
+        {% endif %}
+
+          <a href="{% url 'task:daily_tasks' %}" class="card-link">
             عرض المهام
           </a>
+
+        {% elif has_pending_tasks %}
+
+          <p>
+            لديك مهام علاجية بانتظار إكمالها
+          </p>
+
+          <span class="hint">
+            راجع مهام خطتك العلاجية وواصل تقدمك
+          </span>
+
+          <a href="{% url 'task:daily_tasks' %}" class="card-link">
+            عرض المهام
+          </a>
+
         {% else %}
-          <p class="muted">لا توجد مهام اليوم</p>
-          <span class="hint">سيقوم الأخصائي بإضافة المهام عند بدء الخطة</span>
+
+          <p class="muted">
+            لا توجد مهام حالياً
+          </p>
+
+          <span class="hint">
+            ستظهر المهام هنا عند إضافتها إلى خطتك العلاجية
+          </span>
+
         {% endif %}
+
       </div>
     </div>
 
@@ -134,17 +167,26 @@
             الأخصائي: {{ next_session.specialist.user.get_full_name }}
           </p>
 
-          {% if next_session.can_join %}
+        {% if next_session.can_join %}
+
+          {% if next_session.specialist_joined %}
             <p class="status active">جلسة جارية الآن</p>
             <a href="{% url 'session:join_session' next_session.id %}" class="card-link">
               دخول الجلسة
             </a>
           {% else %}
-            <p class="status upcoming">جلسة قادمة</p>
+            <p class="status upcoming">بانتظار دخول الأخصائي</p>
             <a href="{% url 'patient:sessions' %}" class="card-link">
               عرض جميع الجلسات
             </a>
           {% endif %}
+
+        {% else %}
+          <p class="status upcoming">جلسة قادمة</p>
+          <a href="{% url 'patient:sessions' %}" class="card-link">
+            عرض جميع الجلسات
+          </a>
+        {% endif %}
 
         {% elif last_completed_session %}
           <p><strong>{{ last_completed_session.title }}</strong></p>
@@ -162,7 +204,7 @@
             <span class="hint">بانتظار ملاحظات الأخصائي</span>
           {% endif %}
 
-        {% elif treatment_plan and treatment_plan.status != "ACTIVE" and assessment and assessment.status == "ACCEPTED" %}
+        {% elif treatment_plan and treatment_plan.status == "DRAFT" and assessment and assessment.status == "ACCEPTED" %}
           <p class="muted">الجلسات العلاجية متاحة بعد تفعيل الخطة العلاجية</p>
           <span class="hint">
             الجلسة الاستشارية مجانية، أما الجلسات العلاجية فتتطلب إتمام الدفع
@@ -198,11 +240,21 @@
         {% if treatment_plan %}
           <p>الحالة: {{ treatment_plan.get_status_display }}</p>
 
-          {% if treatment_plan.status != "ACTIVE" %}
-            <span class="hint">
-              الخطة غير مفعّلة حاليًا وسيتم تفعيلها بعد استكمال الإجراءات
-            </span>
-          {% endif %}
+          {% if treatment_plan.status == "DRAFT" %}
+          <span class="hint">
+            الخطة بانتظار إتمام الدفع لتفعيلها
+          </span>
+
+        {% elif treatment_plan.status == "COMPLETED" %}
+          <span class="hint">
+            تم اكتمال هذه الخطة العلاجية
+          </span>
+
+        {% elif treatment_plan.status == "CANCELED" %}
+          <span class="hint">
+            تم إلغاء هذه الخطة العلاجية
+          </span>
+        {% endif %}
 
           <a href="{% url 'patient:treatment_plan' %}" class="card-link">
             عرض الخطة

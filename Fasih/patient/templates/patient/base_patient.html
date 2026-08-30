@@ -48,10 +48,12 @@
           الخطة العلاجية
         </a>
 
-        <a href="{% url 'task:daily_tasks' %}"
-          class="{% if request.resolver_match.url_name == 'daily_tasks' %}active{% endif %}">
-          مهامي
-        </a>
+        {% if has_treatment_history %}
+          <a href="{% url 'task:daily_tasks' %}"
+            class="{% if request.resolver_match.url_name == 'daily_tasks' %}active{% endif %}">
+            مهامي
+          </a>
+       {% endif %}
 
 
         <a href="{% url 'accounts:logout' %}">

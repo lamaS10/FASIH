@@ -24,19 +24,47 @@
     </div>
 
     <div class="session-row">
-      <span class="label">تاريخ الجلسة</span>
-      <span class="value">{{ session.start_time|date:"Y-m-d" }}</span>
+      <span class="label">
+        {% if session.status == "PROPOSED" %}
+          التاريخ المقترح
+        {% else %}
+          تاريخ الجلسة
+        {% endif %}
+      </span>
+
+      <span class="value">
+        {% if session.status == "PROPOSED" and session.proposed_start_time %}
+          {{ session.proposed_start_time|date:"Y-m-d" }}
+        {% else %}
+          {{ session.start_time|date:"Y-m-d" }}
+        {% endif %}
+      </span>
     </div>
 
     <div class="session-row">
-      <span class="label">وقت البداية</span>
-      <span class="value">{{ session.start_time|time:"H:i" }}</span>
+      <span class="label">
+        {% if session.status == "PROPOSED" %}
+          الوقت المقترح
+        {% else %}
+          وقت البداية
+        {% endif %}
+      </span>
+
+      <span class="value">
+        {% if session.status == "PROPOSED" and session.proposed_start_time %}
+          {{ session.proposed_start_time|time:"H:i" }}
+        {% else %}
+          {{ session.start_time|time:"H:i" }}
+        {% endif %}
+      </span>
     </div>
 
+    {% if session.status != "PROPOSED" %}
     <div class="session-row">
       <span class="label">وقت النهاية</span>
       <span class="value">{{ session.end_time|time:"H:i" }}</span>
     </div>
+    {% endif %}
 
     <div class="session-row">
       <span class="label">حالة الجلسة</span>
@@ -50,6 +78,12 @@
       {% elif session.status == "PROPOSED" %}
         <span class="status-badge proposed">⌛ بانتظار التأكيد</span>
 
+      {% elif session.status == "REJECTED" %}
+        <span class="status-badge rejected">تم الرفض</span>
+
+      {% elif session.status == "CANCELED" %}
+        <span class="status-badge canceled">تم الإلغاء</span>
+
       {% else %}
         <span class="status-badge">
           {{ session.get_status_display }}
@@ -59,15 +93,76 @@
 
   </div>
 
+
   <div class="session-actions">
 
-    {% if can_join %}
+    {# الأخصائي يرد على الموعد الذي اقترحه المريض #}
+    {% if session.status == "PROPOSED" and session.proposed_by == "PATIENT" and user.specialist %}
+
+      <form method="post"
+            action="{% url 'session:specialist_respond_session' session.id %}">
+        {% csrf_token %}
+
+        <button type="submit"
+                name="action"
+                value="accept"
+                class="btn-primary">
+          قبول الموعد
+        </button>
+      </form>
+
+      {% if session.proposal_count < 3 %}
+        <form method="post"
+              action="{% url 'session:specialist_respond_session' session.id %}">
+          {% csrf_token %}
+
+          <input type="datetime-local"
+                 name="proposed_start_time"
+                 required>
+
+          <button type="submit"
+                  name="action"
+                  value="suggest"
+                  class="btn-primary">
+            اقتراح موعد آخر
+          </button>
+        </form>
+      {% endif %}
+
+    {# الأخصائي اقترح الموعد وحاليًا ينتظر رد المريض #}
+    {% elif session.status == "PROPOSED" and session.proposed_by == "SPECIALIST" and user.specialist %}
+
+      <span class="muted">
+        ⏳ بانتظار رد المريض على الموعد المقترح
+      </span>
+
+    {% endif %}
+
+
+    {# دخول الجلسة المؤكدة #}
+    {% if can_join and session.status == "CONFIRMED" %}
       <a href="{% url 'session:join_session' session.id %}"
          class="btn-primary">
         ▶ بدء الجلسة
       </a>
     {% endif %}
 
+
+    {# إلغاء الجلسة المؤكدة بواسطة الأخصائي #}
+    {% if session.status == "CONFIRMED" and user.specialist %}
+      <form method="post"
+            action="{% url 'session:cancel_session' session.id %}">
+        {% csrf_token %}
+
+        <button type="submit"
+                class="btn-primary">
+          إلغاء الجلسة
+        </button>
+      </form>
+    {% endif %}
+
+
+    {# ملاحظات الجلسة بعد انتهائها #}
     {% if session.status == "COMPLETED" and user.specialist %}
 
       {% if session.note %}

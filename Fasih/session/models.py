@@ -4,7 +4,6 @@ from specialist.models import Specialist
 import uuid
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-import uuid
 from datetime import timedelta
 
 
@@ -40,6 +39,27 @@ class Session(models.Model):
 
     patient_response_reason = models.TextField(blank=True, null=True)
     patient_suggested_times = models.TextField(blank=True, null=True)
+
+    # الموعد المقترح الحالي أثناء التفاوض
+    proposed_start_time = models.DateTimeField(
+        blank=True,
+        null=True
+    )
+
+    # من صاحب آخر اقتراح
+    class ProposedBy(models.TextChoices):
+        SPECIALIST = "SPECIALIST", "الأخصائي"
+        PATIENT = "PATIENT", "المريض"
+
+    proposed_by = models.CharField(
+        max_length=20,
+        choices=ProposedBy.choices,
+        blank=True,
+        null=True
+    )
+
+    # عدد المواعيد التي تم اقتراحها
+    proposal_count = models.PositiveSmallIntegerField(default=1)
 
     specialist_joined = models.BooleanField(default=False)
 

@@ -30,8 +30,8 @@ SECRET_KEY = 'django-insecure-fkrb))4jlp#)h67(judj@p&knf4h5@dt=1*-)68&nv%q6!m^6-
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
 ALLOWED_HOSTS = []
+
 
 
 # Application definition
@@ -82,6 +82,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'patient.context_processors.patient_treatment_status',
                 
             ],
         },

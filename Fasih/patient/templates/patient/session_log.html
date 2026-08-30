@@ -19,6 +19,7 @@
   </div>
 
   {% if not sessions %}
+
     <div class="sessions-empty-wrapper">
       <div class="sessions-empty-card">
         <h3>لا توجد جلسات بعد</h3>
@@ -30,117 +31,198 @@
 
   {% else %}
 
-  <div class="sessions-table-card">
+    <div class="sessions-table-card">
 
-    <div class="table-responsive">
-      <table class="sessions-table">
+      <div class="table-responsive">
 
-        <thead>
-          <tr>
-            <th>الجلسة</th>
-            <th>النوع</th>
-            <th>التاريخ</th>
-            <th>الوقت</th>
-            <th>الأخصائي</th>
-            <th>الحالة</th>
-            <th>الإجراء</th>
-          </tr>
-        </thead>
+        <table class="sessions-table">
 
-        <tbody>
-        {% for session in sessions %}
-          <tr>
+          <thead>
+            <tr>
+              <th>الجلسة</th>
+              <th>النوع</th>
+              <th>التاريخ</th>
+              <th>الوقت</th>
+              <th>الأخصائي</th>
+              <th>الحالة</th>
+              <th>الإجراء</th>
+            </tr>
+          </thead>
 
-            <td>
-              <strong>{{ session.title }}</strong>
-            </td>
+          <tbody>
 
-            <td>
-              {{ session.get_session_type_display }}
-            </td>
+            {% for session in sessions %}
 
-            <td>
-              {{ session.start_time|date:"Y-m-d" }}
-            </td>
+              <tr>
 
-            <td>
-              {{ session.start_time|time:"H:i" }}
-            </td>
+                <td>
+                  <strong>{{ session.title }}</strong>
+                </td>
 
-            <td>
-              {{ session.specialist.user.get_full_name }}
-            </td>
+                <td>
+                  {{ session.get_session_type_display }}
+                </td>
 
-            <td>
-              <span class="status-badge {{ session.status|lower }}">
-                {{ session.get_status_display }}
-              </span>
-            </td>
+                <td>
+                  {% if session.status == "PROPOSED" and session.proposed_start_time %}
+                    {{ session.proposed_start_time|date:"Y-m-d" }}
+                  {% else %}
+                    {{ session.start_time|date:"Y-m-d" }}
+                  {% endif %}
+                </td>
 
-            <td class="actions-cell">
+                <td>
+                  {% if session.status == "PROPOSED" and session.proposed_start_time %}
+                    {{ session.proposed_start_time|time:"H:i" }}
+                  {% else %}
+                    {{ session.start_time|time:"H:i" }}
+                  {% endif %}
+                </td>
 
-              {% if session.can_join %}
-                <a href="{% url 'session:join_session' session.id %}"
-                   class="btn-primary btn-sm">
-                  دخول الجلسة
-                </a>
+                <td>
+                  {{ session.specialist.user.get_full_name }}
+                </td>
 
-              {% elif session.status == "CONFIRMED" %}
-                <span class="muted">
-                  ⏳ لم يحن الوقت
-                </span>
+                <td>
 
-              {% elif session.status == "COMPLETED" %}
+                  <span class="status-badge {{ session.status|lower }}">
 
-                {% if session.note %}
-                  <a href="{% url 'patient:session_note_detail' session.id %}"
-                     class="btn-primary btn-sm">
-                    عرض الملاحظات
-                  </a>
-                {% else %}
-                  <span class="muted">
-                    بانتظار الملاحظات
+                    {% if session.status == "PROPOSED" and session.proposed_by == "SPECIALIST" %}
+
+                      بانتظار موافقتك
+
+                    {% elif session.status == "PROPOSED" and session.proposed_by == "PATIENT" %}
+
+                      بانتظار رد الأخصائي
+
+                    {% else %}
+
+                      {{ session.get_status_display }}
+
+                    {% endif %}
+
                   </span>
-                {% endif %}
 
-              {% else %}
-                <span class="muted">—</span>
-              {% endif %}
+                </td>
 
-            </td>
+                <td class="actions-cell">
 
-          </tr>
-        {% endfor %}
-        </tbody>
+                  {# الموعد مقترح من الأخصائي وينتظر رد المريض #}
+                  {% if session.status == "PROPOSED" and session.proposed_by == "SPECIALIST" %}
 
-      </table>
-    </div>
+                    <a href="{% url 'patient:sessions' %}"
+                       class="btn-primary btn-sm">
+                      مراجعة الموعد
+                    </a>
 
-    {% if sessions.has_other_pages %}
-    <div class="pagination-wrapper">
 
-      {% if sessions.has_previous %}
-        <a href="?page={{ sessions.previous_page_number }}"
-           class="pagination-btn">
-          السابق
-        </a>
+                  {# المريض اقترح موعد وينتظر رد الأخصائي #}
+                  {% elif session.status == "PROPOSED" and session.proposed_by == "PATIENT" %}
+
+                    <span class="muted">
+                      ⏳ بانتظار رد الأخصائي
+                    </span>
+
+
+                  {# وقت الدخول للجلسة متاح #}
+                  {% elif session.can_join %}
+
+                    {% if session.specialist_joined %}
+
+                      <a href="{% url 'session:join_session' session.id %}"
+                         class="btn-primary btn-sm">
+                        دخول الجلسة
+                      </a>
+
+                    {% else %}
+
+                      <span class="muted">
+                        ⏳ بانتظار دخول الأخصائي
+                      </span>
+
+                    {% endif %}
+
+
+                  {# الجلسة مؤكدة لكن لم يحن وقتها #}
+                  {% elif session.status == "CONFIRMED" %}
+
+                    <span class="muted">
+                      ⏳ لم يحن الوقت
+                    </span>
+
+
+                  {# الجلسة منتهية #}
+                  {% elif session.status == "COMPLETED" %}
+
+                    {% if session.note %}
+
+                      <a href="{% url 'patient:session_note_detail' session.id %}"
+                         class="btn-primary btn-sm">
+                        عرض الملاحظات
+                      </a>
+
+                    {% else %}
+
+                      <span class="muted">
+                        بانتظار الملاحظات
+                      </span>
+
+                    {% endif %}
+
+
+                  {# باقي الحالات #}
+                  {% else %}
+
+                    <span class="muted">—</span>
+
+                  {% endif %}
+
+                </td>
+
+              </tr>
+
+            {% endfor %}
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+
+      {% if sessions.has_other_pages %}
+
+        <div class="pagination-wrapper">
+
+          {% if sessions.has_previous %}
+
+            <a href="?page={{ sessions.previous_page_number }}"
+               class="pagination-btn">
+              السابق
+            </a>
+
+          {% endif %}
+
+
+          <span class="pagination-info">
+            صفحة {{ sessions.number }} من {{ sessions.paginator.num_pages }}
+          </span>
+
+
+          {% if sessions.has_next %}
+
+            <a href="?page={{ sessions.next_page_number }}"
+               class="pagination-btn">
+              التالي
+            </a>
+
+          {% endif %}
+
+        </div>
+
       {% endif %}
 
-      <span class="pagination-info">
-        صفحة {{ sessions.number }} من {{ sessions.paginator.num_pages }}
-      </span>
-
-      {% if sessions.has_next %}
-        <a href="?page={{ sessions.next_page_number }}"
-           class="pagination-btn">
-          التالي
-        </a>
-      {% endif %}
-
     </div>
-    {% endif %}
-
-  </div>
 
   {% endif %}
 
